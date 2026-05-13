@@ -382,6 +382,7 @@ footer{background:var(--brown-dark);border-top:2px solid var(--brown);padding:2r
   ];
 
   function showPreview(file){
+    currentFile = file;
     if(!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = function(e){
@@ -422,45 +423,62 @@ footer{background:var(--brown-dark);border-top:2px solid var(--brown);padding:2r
     showPreview(e.dataTransfer.files[0]);
   });
 
-  btnAnalyze.addEventListener('click', function(){
+  btnAnalyze.addEventListener('click', async function(){
+
     if(!preview.src || preview.style.display==='none'){
-      errorMsg.style.display = 'block';
-      return;
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = 'Please upload an image first!';
+        return;
     }
+
     errorMsg.style.display = 'none';
-    btnAnalyze.classList.add('loading');
-    btnAnalyze.textContent = '⏳ Analysing...';
-    analyzingBar.style.display = 'block';
-    barFill.style.width = '0%';
 
-    // Animate bar
-    let w = 0;
-    const barInterval = setInterval(function(){
-      w = Math.min(w + Math.random()*18, 90);
-      barFill.style.width = w + '%';
-    }, 200);
+    const formData = new FormData();
+    formData.append("image", currentFile);
 
-    setTimeout(function(){
-      clearInterval(barInterval);
-      barFill.style.width = '100%';
+    try {
 
-      setTimeout(function(){
-        analyzingBar.style.display = 'none';
-        barFill.style.width = '0%';
-        btnAnalyze.classList.remove('loading');
-        btnAnalyze.textContent = '🔄 Re-analyse';
+        analyzingBar.style.display = 'block';
+        barFill.style.width = '30%';
 
-        const result = DUMMY_RESULTS[Math.floor(Math.random()*DUMMY_RESULTS.length)];
-        chipTypeVal.textContent = result.type;
-        chipConcernVal.textContent = result.concern;
-        chipScoreVal.textContent = result.score;
+        btnAnalyze.classList.add('loading');
+        btnAnalyze.textContent = '⏳ Analysing...';
 
-        [chipType, chipConcern, chipScore].forEach(function(c, i){
-          setTimeout(function(){c.classList.add('revealed');}, i*150);
+        const response = await fetch('http://127.0.0.1:5000/analyze', {
+            method: 'POST',
+            body: formData
         });
-      }, 300);
-    }, 2200);
-  });
+
+        barFill.style.width = '70%';
+
+        const data = await response.json();
+
+        chipTypeVal.textContent = data.skin_type;
+        chipConcernVal.textContent = data.concern;
+        chipScoreVal.textContent = data.confidence + ' Match';
+
+        barFill.style.width = '100%';
+
+        setTimeout(() => {
+            analyzingBar.style.display = 'none';
+            barFill.style.width = '0%';
+
+            btnAnalyze.classList.remove('loading');
+            btnAnalyze.textContent = '🌿 Analyse My Skin';
+
+        }, 1000);
+
+    } catch(error) {
+
+        console.error(error);
+
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = 'Backend connection failed!';
+
+        btnAnalyze.classList.remove('loading');
+        btnAnalyze.textContent = '🌿 Analyse My Skin';
+    }
+});
 })();
 </script>
 </body>
