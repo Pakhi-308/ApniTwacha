@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apni Twacha - Skin Analysis</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+
+/* ENABLE SMOOTH SCROLLING FOR ENTIRE PAGE */
+html { scroll-behavior: smooth; }
+
+:root{
+  --bg:#E8D5B8;--bg-warm:#DEC9A0;--bg-deep:#D4BC90;--bg-card:#F0E4CC;--bg-section:#DBBF90;
+  --pink:#FF8FAB;--pink-light:#FFD6E0;--pink-dark:#9C3A52;
+  --green:#4A8C2A;--green-light:#C8DDB0;--green-dark:#1E4A0E;
+  --brown:#7A4A1E;--brown-mid:#A06830;--brown-light:#080808;--brown-dark:#3E2008;
+  --yellow:#E8B800;--yellow-light:#FFF0A0;--yellow-dark:#7A5A00;
+  --text:#2A1500;--text-mid:#4A2E0A;--text-soft:#7A5830;--white:#FBF3E5;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+body.locked { overflow: hidden; }
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+@keyframes chipIn{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:translateX(0);}}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- AUTH MODAL STYLES --- */
+.auth-overlay { position: fixed; inset: 0; background: rgba(62,32,8,0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; }
+.auth-overlay.hidden { opacity: 0; pointer-events: none; }
+.auth-modal { background: var(--white); padding: 3.5rem 2.5rem; border-radius: 24px; text-align: center; max-width: 420px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 2px solid var(--brown-light); transition: all 0.3s ease; }
+.auth-modal.hidden { display: none; }
+.auth-modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.6rem; color: var(--brown-dark); margin-bottom: 0.8rem; line-height: 1.1;}
+.auth-modal h2 em { font-style: italic; color: var(--green-dark); }
+.auth-modal p { color: var(--text-mid); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6; }
+.auth-input { width: 100%; padding: 0.9rem 1rem; margin-bottom: 1rem; border: 1.5px solid var(--brown-light); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; background: var(--bg-card); color: var(--text); }
+.auth-input:focus { border-color: var(--green); background: var(--white); }
+.auth-btn { background: var(--green); color: white; border: none; padding: 1rem 2rem; border-radius: 50px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; width: 100%; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(74,140,42,0.4); margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.auth-btn:hover { background: var(--green-dark); transform: translateY(-2px); }
+
+/* Spinner Element */
+.spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; display: none; }
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 4rem;background:var(--brown-dark);border-bottom:2px solid var(--brown);position:sticky;top:0;z-index:100;animation:fadeIn 0.5s ease both;}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:400;color:var(--white);display:flex;align-items:center;gap:8px;}
+.logo em{font-style:italic;color:var(--green-light);}
+.nav-links{display:flex;gap:2.5rem;list-style:none;}
+.nav-links a { text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.8px; color: rgba(255,255,255,0.85); transition: color 0.2s; }
+.nav-links a:hover { color: var(--yellow-light); }
+.nav-actions {display: flex; gap: 1.5rem; align-items: center;}
+.sign-in-link {text-decoration: none; font-size: 0.85rem; font-weight: 600; color: var(--yellow); transition: color 0.2s;}
+.sign-in-link:hover {color: var(--yellow-light);}
+.nav-btn{background:var(--yellow);color:var(--brown-dark);border:none;padding:0.65rem 1.8rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 3px 12px rgba(232,184,0,0.4);}
+.nav-btn:hover{background:var(--yellow-light);transform:translateY(-1px);}
+.palette-strip{display:flex;height:5px;}
+.ps-1{flex:1;background:var(--pink);}.ps-2{flex:1;background:var(--green);}.ps-3{flex:1;background:var(--brown-mid);}
+.ps-4{flex:1;background:var(--yellow);}.ps-5{flex:1;background:var(--pink-dark);}.ps-6{flex:1;background:var(--green-dark);}
+.hero{display:grid;grid-template-columns:1fr 1fr;min-height:90vh;background:var(--bg);position:relative;overflow:hidden;}
+.bg-blob{position:absolute;border-radius:50%;pointer-events:none;}
+.bb-1{width:340px;height:340px;background:var(--yellow-light);opacity:0.3;top:-80px;left:28%;}
+.bb-2{width:200px;height:200px;background:var(--pink-light);opacity:0.25;bottom:40px;left:40%;}
+.bb-3{width:160px;height:160px;background:var(--green-light);opacity:0.25;top:35%;left:5%;}
+.hero-left{display:flex;flex-direction:column;justify-content:center;padding:5.5rem 3.5rem 5.5rem 5rem;position:relative;z-index:2;animation:fadeUp 0.8s 0.1s ease both;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--brown-dark);color:var(--yellow-light);font-size:0.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1.1rem;border-radius:50px;margin-bottom:1.8rem;width:fit-content;border:1.5px solid var(--brown-mid);}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:4.2rem;font-weight:400;line-height:1.12;color:var(--brown-dark);margin-bottom:1.4rem;}
+.hero h1 em{font-style:italic;color:var(--green-dark);}
+.hero h1 .pk{color:var(--pink-dark);}
+.hero-desc{font-size:1rem;line-height:1.8;font-weight:400;color:var(--text-mid);max-width:430px;margin-bottom:2.6rem;}
+.hero-btns{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+.btn-primary{background:var(--green);color:white;border:none;padding:0.9rem 2.4rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(74,140,42,0.4);}
+.btn-primary:hover{background:var(--green-dark);transform:translateY(-2px);}
+.btn-secondary{background:var(--brown-dark);color:var(--yellow-light);border:2px solid var(--brown-mid);padding:0.85rem 2rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn-secondary:hover{background:var(--brown);color:white;border-color:var(--brown);}
+.hero-right{background:var(--bg-warm);display:flex;align-items:center;justify-content:center;position:relative;z-index:2;overflow:hidden;border-left:2px solid var(--bg-deep);}
+.ring{position:absolute;border-radius:50%;border:2px solid;}
+.ring-1{width:360px;height:360px;top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--brown-light);opacity:0.6;}
+.ring-2{width:250px;height:250px;top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--yellow);opacity:0.4;}
+.skin-card{background:var(--white);border-radius:20px;padding:2rem;width:308px;border:2px solid var(--brown-light);position:relative;z-index:2;animation:floatY 5s ease-in-out infinite;box-shadow:0 10px 36px rgba(62,32,8,0.15);}
+.card-stripe{height:5px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,var(--green),var(--yellow),var(--pink),var(--brown-mid));position:absolute;top:-2px;left:-1px;right:-1px;}
+.card-label{font-size:0.68rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-soft);margin-bottom:1.3rem;display:flex;align-items:center;gap:6px;}
+.clabel-dot{width:7px;height:7px;border-radius:50%;background:var(--brown-mid);}
+.upload-zone{border:2px dashed var(--brown-light);border-radius:14px;padding:2rem 1rem;text-align:center;background:var(--bg-card);margin-bottom:1.1rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.upload-zone:hover{border-color:var(--brown-mid);background:var(--bg);}
+.upload-zone.has-image{padding:0;border-style:solid;border-color:var(--green);}
+.upload-zone.dragover{border-color:var(--green);background:var(--green-light);opacity:0.8;}
+.upload-zone.field-invalid{border-color:#c0392b;background:#fff5f5;}
+.upload-icon{width:52px;height:52px;border-radius:50%;background:var(--yellow);border:2.5px solid var(--yellow-dark);display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;font-size:1.3rem;}
+.upload-zone strong{display:block;font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:4px;}
+.upload-zone p{font-size:0.78rem;color:var(--text-soft);line-height:1.5;}
+#file-input{display:none;}
+#img-preview{width:100%;height:160px;object-fit:cover;border-radius:12px;display:none;}
+.preview-badge{position:absolute;top:8px;right:8px;background:var(--green);color:white;font-size:0.65rem;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:50px;display:none;}
+.btn-analyze{width:100%;background:var(--green);color:white;border:none;padding:0.75rem 1rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.87rem;font-weight:700;cursor:pointer;margin-bottom:0.75rem;transition:all 0.2s;display:none;box-shadow:0 4px 14px rgba(74,140,42,0.35);}
+.btn-analyze:hover{background:var(--green-dark);transform:translateY(-1px);}
+.btn-analyze.loading{opacity:0.7;cursor:not-allowed;}
+.error-msg{font-size:0.75rem;color:#c0392b;font-weight:600;text-align:center;margin-bottom:0.6rem;display:none;background:#fde8e8;border-radius:8px;padding:0.45rem 0.8rem;}
+.analyzing-bar{height:3px;background:var(--green-light);border-radius:2px;margin-bottom:0.75rem;display:none;overflow:hidden;}
+.analyzing-bar-fill{height:100%;width:0%;background:var(--green);border-radius:2px;transition:width 0.4s ease;}
+.result-chip{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0.9rem;background:var(--bg-card);border-radius:10px;margin-bottom:0.5rem;border:1.5px solid var(--brown-light);transition:all 0.3s;}
+.result-chip.revealed{border-color:var(--green);background:var(--white);animation:chipIn 0.4s ease both;}
+.chip-lbl{font-size:0.75rem;color:var(--text-soft);font-weight:500;}
+.chip-tag{font-size:0.75rem;font-weight:700;padding:0.25rem 0.85rem;border-radius:50px;}
+.g-tag{background:var(--green);color:white;}
+.y-tag{background:var(--yellow);color:var(--yellow-dark);}
+.b-tag{background:var(--brown-mid);color:white;}
+.severity-row{display:flex;visibility:hidden;max-height:0;overflow:hidden;justify-content:space-between;align-items:center;padding:0;border-radius:10px;margin-bottom:0;border:1.5px solid transparent;background:var(--bg-card);transition:all 0.3s;}
+.severity-row.revealed{visibility:visible;max-height:60px;padding:0.55rem 0.9rem;border-color:var(--brown-light);margin-bottom:0.5rem;animation:chipIn 0.4s ease both;}
+.sev-lbl{font-size:0.75rem;color:var(--text-soft);font-weight:500;}
+.sev-badge{font-size:0.72rem;font-weight:700;padding:0.25rem 0.85rem;border-radius:50px;}
+.chip-high{border-color:#c0392b !important;background:#fff5f5 !important;}
+.chip-high .chip-tag{background:#c0392b;color:white;}
+.chip-medium{border-color:#e67e22 !important;background:#fffaf3 !important;}
+.chip-medium .chip-tag{background:#e67e22;color:white;}
+.chip-low{border-color:var(--green) !important;background:#f4faf0 !important;}
+.chip-low .chip-tag{background:var(--green);color:white;}
+.sev-high{background:#c0392b;color:white;}
+.sev-medium{background:#e67e22;color:white;}
+.sev-low{background:var(--green);color:white;}
+.view-report-btn{width:100%;background:var(--brown-dark);color:var(--yellow-light);border:none;padding:0.65rem 1rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;margin-top:0.4rem;transition:all 0.2s;display:none;}
+.view-report-btn:hover{background:var(--brown);color:white;}
+/* ── User Metadata Inputs ── */
+.meta-section{margin-bottom:0.85rem;}
+.meta-label{font-size:0.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-soft);margin-bottom:0.4rem;display:block;}
+.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;}
+.meta-select,.meta-input{width:100%;background:var(--bg-card);border:1.5px solid var(--brown-light);border-radius:8px;padding:0.5rem 0.7rem;font-family:'DM Sans',sans-serif;font-size:0.78rem;color:var(--text);outline:none;transition:border-color 0.2s;appearance:none;}
+.meta-select:focus,.meta-input:focus{border-color:var(--brown-mid);}
+.meta-select.field-invalid,.meta-input.field-invalid{border-color:#c0392b;background:#fff5f5;}
+.meta-label .req-star{color:#c0392b;margin-left:2px;}
+.concern-grid.field-invalid{outline:1.5px solid #c0392b;outline-offset:4px;border-radius:8px;}
+.meta-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237A5830'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.6rem center;padding-right:1.8rem;}
+.concern-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.35rem;}
+.concern-chip{display:flex;align-items:center;gap:6px;padding:0.38rem 0.6rem;border-radius:7px;border:1.5px solid var(--brown-light);background:var(--bg-card);cursor:pointer;transition:all 0.15s;user-select:none;}
+.concern-chip input[type=checkbox]{display:none;}
+.concern-chip span{font-size:0.72rem;font-weight:500;color:var(--text-soft);}
+.concern-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--brown-light);flex-shrink:0;transition:background 0.15s;}
+.concern-chip.active{border-color:var(--green);background:#f0f8ea;}
+.concern-chip.active span{color:var(--green-dark);font-weight:600;}
+.concern-chip.active .dot{background:var(--green);}
+.meta-divider{height:1px;background:var(--bg-deep);margin:0.75rem 0;}
+.float-pill{position:absolute;background:var(--brown-dark);border:1.5px solid var(--brown-mid);border-radius:50px;padding:0.5rem 1.1rem;font-size:0.75rem;font-weight:600;color:var(--yellow-light);box-shadow:0 4px 14px rgba(62,32,8,0.2);white-space:nowrap;z-index:3;}
+.fp-2{bottom:15%;left:3%;animation:floatY 4s 1.5s ease-in-out infinite;}
+.fpdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--brown-dark);border-top:2px solid var(--brown);border-bottom:2px solid var(--brown);}
+.stat{padding:2.2rem 2rem;text-align:center;border-right:1px solid var(--brown);}
+.stat:last-child{border-right:none;}
+.stat-n{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:2.8rem;font-weight:400;margin-bottom:0.2rem;}
+.stat-n.y{color:var(--yellow);}.stat-n.b{color:var(--brown-light);}.stat-n.p{color:var(--pink);}
+.stat-l{font-size:0.7rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--brown-light);}
+.section{padding:5.5rem 5rem;max-width:1200px;margin:0 auto;}
+.sec-tag{display:inline-block;font-size:0.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.35rem 1rem;border-radius:50px;margin-bottom:0.8rem;}
+.sec-tag.y{background:var(--yellow);color:var(--brown-dark);}.sec-tag.g{background:var(--green);color:white;}
+.sec-tag.b{background:var(--brown-dark);color:var(--yellow-light);}.sec-tag.p{background:var(--pink-dark);color:white;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:400;line-height:1.2;color:var(--brown-dark);margin-bottom:0.8rem;}
+.sec-title em{font-style:italic;color:var(--green-dark);}.sec-title .pk{color:var(--pink-dark);}
+.sec-sub{font-size:0.95rem;line-height:1.8;font-weight:400;color:var(--text-mid);max-width:460px;margin-bottom:3.2rem;}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+.step-card{background:var(--white);border-radius:18px;padding:2.2rem;transition:transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;}
+.step-card:nth-child(1){border:2px solid var(--green);}.step-card:nth-child(2){border:2px solid var(--yellow);}.step-card:nth-child(3){border:2px solid var(--brown-mid);}
+.step-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(62,32,8,0.15);}
+.step-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem;}
+.step-icon.g{background:var(--green);color:white;}.step-icon.y{background:var(--yellow);}.step-icon.b{background:var(--brown-mid);color:white;}
+.step-n{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:3rem;font-weight:400;color:var(--bg-deep);line-height:1;position:absolute;top:1.5rem;right:1.5rem;}
+.step-card h3{font-size:1rem;font-weight:600;color:var(--brown-dark);margin-bottom:0.5rem;}
+.step-card p{font-size:0.87rem;line-height:1.7;color:var(--text-mid);}
+.skin-bg{background:var(--bg-section);border-top:2px solid var(--bg-deep);border-bottom:2px solid var(--bg-deep);padding:5.5rem 0;}
+.skin-inner{max-width:1200px;margin:0 auto;padding:0 5rem;}
+.skin-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-top:2.8rem;}
+.skin-tile{background:var(--white);border-radius:16px;padding:1.8rem 1rem;text-align:center;border:2px solid var(--brown-light);transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;}
+.skin-tile:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(62,32,8,0.12);}
+.skin-tile:nth-child(1):hover{border-color:var(--green);}.skin-tile:nth-child(2):hover{border-color:var(--yellow);}
+.skin-tile:nth-child(3):hover{border-color:var(--pink);}.skin-tile:nth-child(4):hover{border-color:var(--brown-mid);}.skin-tile:nth-child(5):hover{border-color:var(--green);}
+.tile-sym{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:2.2rem;margin-bottom:0.6rem;}
+.skin-tile:nth-child(1) .tile-sym{color:var(--green);}.skin-tile:nth-child(2) .tile-sym{color:var(--yellow-dark);}
+.skin-tile:nth-child(3) .tile-sym{color:var(--pink);}.skin-tile:nth-child(4) .tile-sym{color:var(--brown-mid);}.skin-tile:nth-child(5) .tile-sym{color:var(--green-dark);}
+.skin-tile h4{font-size:0.9rem;font-weight:600;color:var(--brown-dark);margin-bottom:0.35rem;}
+.skin-tile p{font-size:0.78rem;color:var(--text-soft);line-height:1.5;}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2.8rem;}
+.rec-card{background:var(--white);border-radius:18px;padding:2.2rem;transition:box-shadow 0.2s;}
+.rec-card:nth-child(1){border:2px solid var(--green);}.rec-card:nth-child(2){border:2px solid var(--brown-mid);}
+.rec-card:hover{box-shadow:0 10px 32px rgba(62,32,8,0.12);}
+.rec-head{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.2rem;border-bottom:2px solid var(--bg-card);}
+.rec-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.rec-icon.g{background:var(--green-light);border:2px solid var(--green);}.rec-icon.b{background:var(--brown-light);border:2px solid var(--brown-mid);}
+.rec-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--brown-dark);}
+.rec-sub{font-size:0.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-soft);font-weight:500;}
+.rec-item{display:flex;gap:0.8rem;padding:0.68rem 0;border-bottom:1px solid var(--bg-card);font-size:0.87rem;color:var(--text-mid);align-items:flex-start;}
+.rec-item:last-child{border-bottom:none;}
+.rec-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.rec-dot.g{background:var(--green);}.rec-dot.b{background:var(--brown-mid);}
+.cta{background:var(--green-dark);padding:6rem 5rem;text-align:center;position:relative;overflow:hidden;}
+.cta::before{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:var(--yellow);opacity:0.06;top:-120px;right:-80px;}
+.cta::after{content:'';position:absolute;width:250px;height:250px;border-radius:50%;background:var(--pink);opacity:0.07;bottom:-80px;left:8%;}
+.cta h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:2.8rem;font-weight:400;color:var(--white);margin-bottom:0.9rem;line-height:1.25;position:relative;z-index:1;}
+.cta p{font-size:0.82rem;color:var(--green-light);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2.4rem;position:relative;z-index:1;}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.cta-btn-main{background:var(--yellow);color:var(--brown-dark);border:none;padding:0.9rem 2.5rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.cta-btn-main:hover{transform:translateY(-2px);}
+.cta-btn-sec{background:transparent;color:var(--white);border:2px solid rgba(251,243,229,0.4);padding:0.9rem 2.2rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:400;cursor:pointer;transition:all 0.2s;}
+.cta-btn-sec:hover{border-color:var(--white);}
+footer{background:var(--brown-dark);border-top:2px solid var(--brown);padding:2rem 5rem;display:flex;justify-content:space-between;align-items:center;}
+.f-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:400;color:var(--white);display:flex;align-items:center;gap:6px;}
+.f-logo em{font-style:italic;color:var(--green-light);}
+.f-leaf{width:8px;height:11px;background:var(--green-light);border-radius:50% 0 50% 0;transform:rotate(-20deg);}
+.f-note{font-size:0.75rem;color:var(--brown-light);}
+/* ── PHASE 5: Results Page ── */
+.results-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;}
+.results-page.active{display:block;animation:fadeIn 0.4s ease both;}
+.rp-nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 3rem;background:var(--brown-dark);border-bottom:2px solid var(--brown);position:sticky;top:0;z-index:10;}
+.rp-back{background:none;border:1.5px solid var(--brown-mid);color:var(--brown-light);padding:0.5rem 1.2rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.2s;}
+.rp-back:hover{background:var(--brown);color:white;}
+.rp-logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--white);}
+.rp-logo em{font-style:italic;color:var(--green-light);}
+.rp-hero{background:var(--green-dark);padding:3rem 4rem;position:relative;overflow:hidden;}
+.rp-hero::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:var(--yellow);opacity:0.06;top:-100px;right:-60px;}
+.rp-hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:2.5rem;position:relative;z-index:1;}
+.rp-photo{width:90px;height:90px;border-radius:16px;object-fit:cover;border:3px solid var(--green-light);flex-shrink:0;}
+.rp-headline{flex:1;}
+.rp-eyebrow{font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--green-light);margin-bottom:0.4rem;}
+.rp-headline h2{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:400;color:var(--white);line-height:1.2;margin-bottom:0.5rem;}
+.rp-headline h2 em{font-style:italic;color:var(--yellow);}
+.rp-meta{display:flex;gap:1rem;flex-wrap:wrap;}
+.rp-pill{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--white);font-size:0.75rem;font-weight:600;padding:0.3rem 0.9rem;border-radius:50px;}
+.rp-pill.sev-high{background:rgba(192,57,43,0.3);border-color:#c0392b;}
+.rp-pill.sev-medium{background:rgba(230,126,34,0.3);border-color:#e67e22;}
+.rp-pill.sev-low{background:rgba(74,140,42,0.3);border-color:var(--green);}
+.rp-body{max-width:900px;margin:0 auto;padding:2.5rem 4rem;}
+.rp-section{margin-bottom:2rem;}
+.rp-section-title{font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-soft);font-weight:700;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:2px solid var(--bg-deep);}
+.rp-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.rp-card{background:var(--white);border-radius:14px;padding:1.5rem;border:1.5px solid var(--brown-light);}
+.rp-card-icon{font-size:1.4rem;margin-bottom:0.6rem;}
+.rp-card h4{font-size:0.9rem;font-weight:700;color:var(--brown-dark);margin-bottom:0.4rem;}
+.rp-card p{font-size:0.82rem;color:var(--text-mid);line-height:1.6;}
+.rp-nuskhe{background:var(--white);border-radius:14px;border:2px solid var(--green);overflow:hidden;}
+.rp-nuskhe-head{background:var(--green);padding:1rem 1.5rem;display:flex;align-items:center;gap:10px;}
+.rp-nuskhe-head span{font-size:0.8rem;font-weight:700;color:white;}
+.rp-nuskhe-list{padding:0.5rem 0;}
+.rp-nuskhe-item{display:flex;gap:1rem;padding:0.9rem 1.5rem;border-bottom:1px solid var(--bg-card);align-items:flex-start;}
+.rp-nuskhe-item:last-child{border-bottom:none;}
+.rp-nuskhe-num{width:24px;height:24px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.rp-nuskhe-text{font-size:0.85rem;color:var(--text-mid);line-height:1.6;}
+.rp-products{background:var(--white);border-radius:14px;border:2px solid var(--brown-mid);overflow:hidden;}
+.rp-products-head{background:var(--brown-mid);padding:1rem 1.5rem;display:flex;align-items:center;gap:10px;}
+.rp-products-head span{font-size:0.8rem;font-weight:700;color:white;}
+.rp-prod-item{display:flex;gap:1rem;padding:0.9rem 1.5rem;border-bottom:1px solid var(--bg-card);align-items:flex-start;}
+.rp-prod-item:last-child{border-bottom:none;}
+.rp-prod-dot{width:8px;height:8px;border-radius:50%;background:var(--brown-mid);flex-shrink:0;margin-top:6px;}
+.rp-prod-text{font-size:0.85rem;color:var(--text-mid);line-height:1.6;}
+.rp-routine{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.rp-routine-card{background:var(--white);border-radius:14px;padding:1.4rem;border:1.5px solid var(--brown-light);}
+.rp-routine-card h4{font-size:0.82rem;font-weight:700;color:var(--brown-dark);margin-bottom:0.8rem;}
+.rp-routine-step{font-size:0.8rem;color:var(--text-mid);padding:0.4rem 0;border-bottom:1px solid var(--bg-card);display:flex;align-items:center;gap:8px;}
+.rp-routine-step:last-child{border-bottom:none;}
+.rp-routine-step::before{content:'→';color:var(--brown-mid);font-size:0.7rem;}
+.rp-cta-box{background:var(--brown-dark);border-radius:14px;padding:2rem;text-align:center;margin-top:2rem;}
+.rp-cta-box h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.6rem;color:var(--white);margin-bottom:0.5rem;}
+.rp-cta-box p{font-size:0.82rem;color:var(--brown-light);margin-bottom:1.4rem;}
+.rp-cta-btn{background:var(--yellow);color:var(--brown-dark);border:none;padding:0.8rem 2rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:0.87rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.rp-cta-btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body class="locked">
+
+<!-- AUTHENTICATION OVERLAY MODAL -->
+<div class="auth-overlay" id="auth-overlay">
+  <!-- Simplified Sign In: Just Name -->
+  <div class="auth-modal" id="auth-step-1">
+    <h2>Welcome to Apni<em>Twacha</em></h2>
+    <p>Please enter your name to personalize your skin analysis and securely store your data.</p>
+    <input type="text" class="auth-input" id="auth-name" placeholder="Full Name" required />
+    
+    <button type="button" class="auth-btn" id="sign-in-btn">
+      <span class="spinner" id="spinner-1"></span>
+      <span class="btn-text" id="btn-text-1">Sign In</span>
+    </button>
+  </div>
+</div>
+
+<div class="palette-strip">
+  <div class="ps-1"></div><div class="ps-2"></div><div class="ps-3"></div>
+  <div class="ps-4"></div><div class="ps-5"></div><div class="ps-6"></div>
+</div>
+
+<nav>
+  <div class="logo"><div style="width:22px;height:22px;border-radius:50%;background:var(--yellow);border:2px solid var(--yellow-dark);display:flex;align-items:center;justify-content:center;font-size:0.6rem;">🌿</div>Apni<em>Twacha</em></div>
+  <ul class="nav-links">
+    <li><a href="#process">Process</a></li>
+    <li><a href="#skin-types">Skin Types</a></li>
+    <li><a href="#remedies">Remedies</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="#" class="sign-in-link" id="nav-user-status">Sign In</a>
+    <button type="button" class="nav-btn" id="nav-analyze-btn"> 🌿 Analyse My Skin </button>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="bg-blob bb-1"></div><div class="bg-blob bb-2"></div><div class="bg-blob bb-3"></div>
+  <div class="hero-left">
+    <div class="eyebrow">✦ AI-Powered Skincare</div>
+    <h1>Skin that<br/><em>glows</em> from<br/>the <span class="pk">inside out.</span></h1>
+    <p class="hero-desc">Upload your photo and let ApniTwacha detect your skin type in seconds. Get personalised Gharelu Nuskhe and curated skincare — crafted just for you.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" id="hero-analyze-btn">🌿 Analyse My Skin</button>
+      <button class="btn-secondary" id="hero-works-btn">How It Works</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="ring ring-1"></div><div class="ring ring-2"></div>
+    <div class="skin-card">
+      <div class="card-stripe"></div>
+      <div class="card-label"><span class="clabel-dot"></span>Your Skin Analysis</div>
+      <div class="upload-zone" id="upload-zone">
+        <img id="img-preview" alt="Preview"/>
+        <span class="preview-badge" id="preview-badge">✓ Ready</span>
+        <div id="upload-placeholder">
+          <div class="upload-icon">📷</div>
+          <strong>Upload Your Photo</strong>
+          <p>Tap to browse or drag & drop.<br/>Natural light works best. Securely saved to your profile.</p>
+        </div>
+        <input type="file" id="file-input" accept="image/*"/>
+      </div>
+      <div class="error-msg" id="error-msg">⚠ Please upload a photo first.</div>
+      <!-- User Metadata -->
+      <div class="meta-section">
+        <div class="meta-row">
+          <div>
+            <label class="meta-label">Gender<span class="req-star">*</span></label>
+            <select class="meta-select" id="meta-gender">
+              <option value="">Select</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="meta-label">Age<span class="req-star">*</span></label>
+            <input class="meta-input" id="meta-age" type="number" min="10" max="99" placeholder="e.g. 25"/>
+          </div>
+        </div>
+        <label class="meta-label">Skin Concerns<span class="req-star">*</span></label>
+        <div class="concern-grid" id="concern-grid">
+          <label class="concern-chip"><input type="checkbox" value="Acne"/><span class="dot"></span><span>Acne</span></label>
+          <label class="concern-chip"><input type="checkbox" value="Dryness"/><span class="dot"></span><span>Dryness</span></label>
+          <label class="concern-chip"><input type="checkbox" value="Pigmentation"/><span class="dot"></span><span>Pigmentation</span></label>
+          <label class="concern-chip"><input type="checkbox" value="Oiliness"/><span class="dot"></span><span>Oiliness</span></label>
+          <label class="concern-chip"><input type="checkbox" value="Sensitivity"/><span class="dot"></span><span>Sensitivity</span></label>
+          <label class="concern-chip"><input type="checkbox" value="Dark Spots"/><span class="dot"></span><span>Dark Spots</span></label>
+        </div>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="analyzing-bar" id="analyzing-bar"><div class="analyzing-bar-fill" id="bar-fill"></div></div>
+      <button type="button" class="btn-analyze" id="btn-analyze">🌿 Analyse My Skin</button>
+      <div class="result-chip" id="chip-type"><span class="chip-lbl">Skin Type Detected</span><span class="chip-tag g-tag" id="chip-type-val">—</span></div>
+      <div class="result-chip" id="chip-concern"><span class="chip-lbl">Main Concern</span><span class="chip-tag y-tag" id="chip-concern-val">—</span></div>
+      <div class="severity-row" id="chip-severity"><span class="sev-lbl">Severity Level</span><span class="sev-badge" id="chip-severity-val">—</span></div>
+      <button class="view-report-btn" id="view-report-btn">📋 View Full Report →</button>
+    </div>
+    <div class="float-pill fp-2"><span class="fpdot" style="background:var(--pink)"></span>Gharelu Nuskhe Ready</div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n y">5</div><div class="stat-l">Skin Types Covered</div></div>
+  <div class="stat"><div class="stat-n b">30s</div><div class="stat-l">Analysis Time</div></div>
+  <div class="stat"><div class="stat-n p">100%</div><div class="stat-l">Private & Secure</div></div>
+</div>
+
+<section id="process">
+  <div class="section">
+    <div class="sec-tag y">How it works</div>
+    <h2 class="sec-title">Three simple steps<br/>to <em>radiant skin</em></h2>
+    <p class="sec-sub">No appointments, no complexity. A single photograph begins your most personalised skincare journey yet.</p>
+    <div class="steps">
+      <div class="step-card"><div class="step-n">01</div><div class="step-icon g">📷</div><h3>Upload Your Photo</h3><p>A clear selfie in natural light is all we need. Analysed instantly and securely stored in your account to track your skin transformation.</p></div>
+      <div class="step-card"><div class="step-n">02</div><div class="step-icon y">🤖</div><h3>AI Reads Your Skin</h3><p>Our model detects your exact skin type — oily, dry, combination, sensitive, or normal — in seconds.</p></div>
+      <div class="step-card"><div class="step-n">03</div><div class="step-icon b">💌</div><h3>Receive Your Ritual</h3><p>Gharelu Nuskhe and curated products arrive — tailored entirely to your detected skin type.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="skin-bg" id="skin-types">
+  <div class="skin-inner">
+    <div class="sec-tag b">We detect all skin types</div>
+    <h2 class="sec-title">Which one<br/><em>are you?</em></h2>
+    <div class="skin-grid">
+      <div class="skin-tile"><span class="tile-sym">~</span><h4>Dry</h4><p>Tight, flaky, craving deep hydration.</p></div>
+      <div class="skin-tile"><span class="tile-sym">◎</span><h4>Oily</h4><p>Shiny, enlarged pores, breakout-prone.</p></div>
+      <div class="skin-tile"><span class="tile-sym">◑</span><h4>Combination</h4><p>Oily T-zone, drier cheeks.</p></div>
+      <div class="skin-tile"><span class="tile-sym">✦</span><h4>Sensitive</h4><p>Easily irritated, prone to redness.</p></div>
+      <div class="skin-tile"><span class="tile-sym">○</span><h4>Normal</h4><p>Balanced, naturally clear skin.</p></div>
+    </div>
+  </div>
+</div>
+
+<section id="remedies">
+  <div class="section">
+    <div class="sec-tag g">Your recommendations</div>
+    <h2 class="sec-title">Two paths to<br/><span class="pk">glowing skin</span></h2>
+    <p class="sec-sub">The wisdom of Indian home remedies and the precision of modern formulations — both personalised entirely to you.</p>
+    <div class="rec-grid">
+      <div class="rec-card">
+        <div class="rec-head"><div class="rec-icon g">🌿</div><div><div class="rec-title">Gharelu Nuskhe</div><div class="rec-sub">Natural Home Remedies</div></div></div>
+        <div class="rec-item"><div class="rec-dot g"></div>Multani Mitti & rose water pack for oily skin</div>
+        <div class="rec-item"><div class="rec-dot g"></div>Besan, turmeric & milk mask for natural glow</div>
+        <div class="rec-item"><div class="rec-dot g"></div>Aloe vera gel as a gentle overnight treatment</div>
+        <div class="rec-item"><div class="rec-dot g"></div>Glycerin & rose water mist for dry skin relief</div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-head"><div class="rec-icon b">🧴</div><div><div class="rec-title">Skincare Products</div><div class="rec-sub">Curated Formulations</div></div></div>
+        <div class="rec-item"><div class="rec-dot b"></div>Niacinamide 10% serum for pore minimising</div>
+        <div class="rec-item"><div class="rec-dot b"></div>Hyaluronic acid for deep multi-layer hydration</div>
+        <div class="rec-item"><div class="rec-dot b"></div>Salicylic acid cleanser for clearing breakouts</div>
+        <div class="rec-item"><div class="rec-dot b"></div>Ceramide moisturiser to restore skin barrier</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="cta">
+  <h2>"Your best skin starts<br/>with knowing it."</h2>
+  <p>Free · Private · Under 30 seconds</p>
+  <div class="cta-btns">
+    <button class="cta-btn-main" id="bottom-analyze-btn">✦ Analyse My Skin</button>
+    <button class="cta-btn-sec" id="bottom-learn-btn">Learn More</button>
+  </div>
+</div>
+
+<footer id="about">
+  <div class="f-logo"><div class="f-leaf"></div>Apni<em>Twacha</em></div>
+  <div class="f-note">Made with care for every skin type</div>
+  <div class="f-note">© 2026 ApniTwacha · Private by design</div>
+</footer>
+
+<!-- PHASE 5: Results Page -->
+<div class="results-page" id="results-page">
+  <nav class="rp-nav">
+    <button class="rp-back" id="rp-back">← Back</button>
+    <div class="rp-logo">Apni<em>Twacha</em></div>
+    <div style="width:80px"></div>
+  </nav>
+  <div class="rp-hero">
+    <div class="rp-hero-inner">
+      <img class="rp-photo" id="rp-photo" alt="Your photo"/>
+      <div class="rp-headline">
+        <div class="rp-eyebrow">Your Personalised Skin Report</div>
+        <h2>Your skin is <em id="rp-skin-type">—</em></h2>
+        <div class="rp-meta">
+          <span class="rp-pill" id="rp-concern-pill">—</span>
+          <span class="rp-pill" id="rp-severity-pill">—</span>
+        </div>
+        <div class="rp-meta" style="margin-top:0.5rem;" id="rp-meta-extra"></div>
+      </div>
+    </div>
+  </div>
+  <div class="rp-body">
+    <div class="rp-section">
+      <div class="rp-section-title">What This Means For You</div>
+      <div class="rp-cards" id="rp-info-cards"></div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">🌿 Gharelu Nuskhe — Home Remedies</div>
+      <div class="rp-nuskhe">
+        <div class="rp-nuskhe-head"><span>🌿</span><span>Natural Remedies Personalised For You</span></div>
+        <div class="rp-nuskhe-list" id="rp-nuskhe-list"></div>
+      </div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">🧴 Recommended Skincare Products</div>
+      <div class="rp-products">
+        <div class="rp-products-head"><span>🧴</span><span>Curated Products For Your Skin Type</span></div>
+        <div id="rp-products-list"></div>
+      </div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">📅 Your Daily Routine</div>
+      <div class="rp-routine">
+        <div class="rp-routine-card"><h4>☀️ Morning Routine</h4><div id="rp-morning"></div></div>
+        <div class="rp-routine-card"><h4>🌙 Night Routine</h4><div id="rp-night"></div></div>
+      </div>
+    </div>
+    <div class="rp-cta-box">
+      <h3>"Consistency is your best skincare product."</h3>
+      <p>Follow this routine daily for visible results in 4–6 weeks.</p>
+      <button class="rp-cta-btn" id="rp-reanalyse">🔄 Analyse Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  // ── 1. SIMPLIFIED LOGIN LOGIC (NAME ONLY) ──
+  const authOverlay = document.getElementById('auth-overlay');
+  const nameInput = document.getElementById('auth-name');
+  
+  const signInBtn = document.getElementById('sign-in-btn');
+  const spinner1 = document.getElementById('spinner-1');
+  const btnText1 = document.getElementById('btn-text-1');
+  
+  const navUserStatus = document.getElementById('nav-user-status');
+  let currentUserName = "";
+
+  signInBtn.addEventListener('click', () => {
+    if(!nameInput.value.trim()) {
+      alert("Please enter your name to continue.");
+      return;
+    }
+    
+    // Disable button & trigger quick loading simulation
+    signInBtn.disabled = true;
+    spinner1.style.display = 'inline-block';
+    btnText1.textContent = 'Signing in...';
+
+    setTimeout(() => {
+      currentUserName = nameInput.value.trim();
+      
+      // Unlock website
+      authOverlay.classList.add('hidden');
+      document.body.classList.remove('locked');
+      
+      // Embed personalized user header seamlessly
+      const firstName = currentUserName.split(' ')[0];
+      navUserStatus.textContent = 'Hi, ' + firstName;
+      
+      // Reset button states just in case
+      signInBtn.disabled = false;
+      spinner1.style.display = 'none';
+      btnText1.textContent = 'Sign In';
+
+    }, 800); // Quick 0.8s loading simulation
+  });
+
+
+  // ── 2. SCROLL BUTTONS ──
+  document.getElementById('nav-analyze-btn').addEventListener('click', () => {
+    document.getElementById('upload-zone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  document.getElementById('hero-analyze-btn').addEventListener('click', () => {
+    document.getElementById('upload-zone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  document.getElementById('hero-works-btn').addEventListener('click', () => {
+    document.getElementById('process').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.getElementById('bottom-analyze-btn').addEventListener('click', () => {
+    document.getElementById('upload-zone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  document.getElementById('bottom-learn-btn').addEventListener('click', () => {
+    document.getElementById('about').scrollIntoView({ behavior: 'smooth', block: 'end' });
+  });
+
+
+  // ── 3. APPLICATION LOGIC ──
+  let currentFile = null;
+  let lastResult  = null;
+
+  const zone            = document.getElementById('upload-zone');
+  const fileInput       = document.getElementById('file-input');
+  const preview         = document.getElementById('img-preview');
+  const placeholder     = document.getElementById('upload-placeholder');
+  const badge           = document.getElementById('preview-badge');
+  const btnAnalyze      = document.getElementById('btn-analyze');
+  const errorMsg        = document.getElementById('error-msg');
+  const analyzingBar    = document.getElementById('analyzing-bar');
+  const barFill         = document.getElementById('bar-fill');
+  const chipType        = document.getElementById('chip-type');
+  const chipConcern     = document.getElementById('chip-concern');
+  const chipTypeVal     = document.getElementById('chip-type-val');
+  const chipConcernVal  = document.getElementById('chip-concern-val');
+  const chipSeverity    = document.getElementById('chip-severity');
+  const chipSeverityVal = document.getElementById('chip-severity-val');
+  const viewReportBtn   = document.getElementById('view-report-btn');
+  const resultsPage     = document.getElementById('results-page');
+  const rpBack          = document.getElementById('rp-back');
+  const rpReanalyse     = document.getElementById('rp-reanalyse');
+
+  const SEV_CONFIG = {
+    'High':   {emoji:'🔴', cls:'chip-high',   badgeCls:'sev-high',   label:'Needs Attention'},
+    'Medium': {emoji:'🟡', cls:'chip-medium',  badgeCls:'sev-medium', label:'Moderate'},
+    'Low':    {emoji:'🟢', cls:'chip-low',     badgeCls:'sev-low',    label:'Mild'},
+  };
+
+  const SKIN_DATA = {
+    'Oily': {
+      info:[
+        {icon:'💧',title:'Why It Happens',text:'Your sebaceous glands produce excess oil, leading to a shiny appearance and clogged pores.'},
+        {icon:'⚠️',title:'What To Avoid',text:'Heavy creams, coconut oil, and alcohol-based toners — these either clog pores or trigger more oil production.'},
+        {icon:'✅',title:'What Helps',text:'Lightweight, oil-free products with BHA (salicylic acid) to clear pores and niacinamide to regulate sebum.'},
+        {icon:'🌤',title:'Good News',text:'Oily skin ages slower! The natural oils keep skin supple and reduce wrinkles over time.'},
+      ],
+      nuskhe:[
+        'Multani Mitti + rose water face pack — apply 2× per week to absorb excess oil and dry out active acne.',
+        'Neem & Turmeric paste on active breakouts — acts as a powerful antibacterial overnight spot treatment.',
+        'Sandalwood (Chandan) powder with aloe vera — calms inflamed acne and reduces redness.',
+        'Cucumber juice toner — keeps pores tight and skin refreshed throughout the day.'
+      ],
+      products:[
+        'Salicylic acid 2% face wash (BHA for deep pore cleansing)',
+        'Niacinamide 10% serum — regulates sebum and minimises pores',
+        'Oil-free gel moisturiser with hyaluronic acid',
+        'Benzoyl peroxide 2.5% spot treatment for stubborn acne'
+      ],
+      morning:['Gentle salicylic acid cleanser','Niacinamide serum','Oil-free SPF 30+ moisturiser'],
+      night:['Double cleanse (oil then foam)','BHA exfoliant (2-3x/week)','Light gel moisturiser'],
+    },
+    'Dry': {
+      info:[
+        {icon:'💧',title:'Why It Happens',text:'Your skin barrier is compromised and cannot retain moisture effectively, leading to tightness and flaking.'},
+        {icon:'⚠️',title:'What To Avoid',text:'Hot showers, foaming cleansers, and products with alcohol — they strip the little moisture your skin has.'},
+        {icon:'✅',title:'What Helps',text:'Ceramides, hyaluronic acid, and occlusives like shea butter that repair the barrier and lock in moisture.'},
+        {icon:'🌤',title:'Good News',text:'Dry skin rarely gets breakouts! With the right moisturiser, it can look plump, calm, and radiant.'},
+      ],
+      nuskhe:['Malai (raw milk cream) left on skin for 20 minutes — deeply nourishing and brightening','Almond oil massage before bed — rich in Vitamin E for overnight deep repair','Banana + honey mask (15 min) — intense hydration and natural glow boost','Glycerin + rose water mist — spray throughout the day to maintain hydration'],
+      products:['Ceramide-rich creamy cleanser (no foaming sulfates)','Hyaluronic acid serum on damp skin for deep hydration','Shea butter or squalane-based thick night moisturiser','Gentle lactic acid 5% (AHA) to remove flaky skin without irritation'],
+      morning:['Cream cleanser (no foam)','Hyaluronic acid serum','Rich SPF moisturiser'],
+      night:['Cream cleanser','Hydrating toner','Thick ceramide night cream'],
+    },
+    'Combination': {
+      info:[
+        {icon:'💧',title:'Why It Happens',text:'Your T-zone (forehead, nose, chin) has more oil glands than your cheeks, creating two different skin zones.'},
+        {icon:'⚠️',title:'What To Avoid',text:'Using the same product all over — heavy creams on T-zone and drying products on cheeks both cause problems.'},
+        {icon:'✅',title:'What Helps',text:'Zone-based routines: balancing products on T-zone, hydrating ones on cheeks. Niacinamide works well across both.'},
+        {icon:'🌤',title:'Good News',text:'Combination skin is the most common type — lots of products are formulated specifically for you!'},
+      ],
+      nuskhe:['Besan + curd mask on T-zone only — absorbs oil without drying cheeks','Rose water toner all over — balances pH across both zones naturally','Aloe vera gel on dry cheek patches after cleansing','Clay mask on T-zone only, 1× per week for pore control'],
+      products:['Balanced gel-cream cleanser (pH 5.0–5.5)','Niacinamide 5% serum across both zones','Lightweight gel moisturiser (non-comedogenic)','Clay mask for T-zone use only, 1× weekly'],
+      morning:['Gentle gel cleanser','Niacinamide serum','Lightweight SPF moisturiser'],
+      night:['Gel cleanser','Zone moisturising (gel on T-zone, cream on cheeks)','Spot treatment if needed'],
+    },
+    'Sensitive': {
+      info:[
+        {icon:'💧',title:'Why It Happens',text:'Your skin barrier is thinner and more reactive, causing it to respond strongly to products, weather, or stress.'},
+        {icon:'⚠️',title:'What To Avoid',text:'Fragrance, alcohol, citrus ingredients, physical scrubs, and anything not patch-tested first.'},
+        {icon:'✅',title:'What Helps',text:'Minimal ingredient lists, Centella asiatica (Cica), azelaic acid, and mineral SPF to calm and protect.'},
+        {icon:'🌤',title:'Good News',text:'Once you find your routine, sensitive skin can be beautifully calm and clear with very few products.'},
+      ],
+      nuskhe:['Chilled raw milk compress for 10 minutes — instantly calms redness and irritation','Fresh aloe vera gel (from the leaf) as a soothing serum after cleansing','Oat water rinse — boil oats, cool, use as a gentle face wash','Avoid all citrus-based home remedies — they will trigger irritation'],
+      products:['Fragrance-free micellar water for gentle cleansing','Centella asiatica (Cica) cream to repair and strengthen barrier','Azelaic acid 10% for redness and rosacea management','Mineral SPF 30+ only — no chemical UV filters'],
+      morning:['Micellar water or gentle cream cleanser','Cica serum','Mineral SPF 50'],
+      night:['Gentle cream cleanser','Barrier repair moisturiser','Azelaic acid (every other night)'],
+    },
+    'Normal': {
+      info:[
+        {icon:'💧',title:'Why It Happens',text:"Your sebum production and moisture retention are naturally balanced — you're one of the lucky ones!"},
+        {icon:'⚠️',title:'What To Avoid',text:"Skipping SPF and moisturiser thinking you don't need it — prevention is everything at this stage."},
+        {icon:'✅',title:'What Helps',text:'Antioxidants (Vitamin C), SPF, and light retinol to maintain your skin\'s natural health long-term.'},
+        {icon:'🌤',title:'Good News',text:'Normal skin responds well to almost any routine. Focus on prevention and your skin will stay great.'},
+      ],
+      nuskhe:['Turmeric + milk + besan glow mask 1× per week — brightens and evens tone','Green tea face rinse — antioxidant protection and mild toning','Papaya enzyme mask for gentle weekly exfoliation and glow','Rose water as a daily toner to maintain natural radiance'],
+      products:['Gentle foaming or gel cleanser','Vitamin C 10% serum for brightness and sun damage prevention','Lightweight SPF 30+ daily moisturiser','Retinol 0.25% (2× per week) for long-term anti-ageing'],
+      morning:['Gentle cleanser','Vitamin C serum','SPF 30+ moisturiser'],
+      night:['Gentle cleanser','Hydrating toner','Retinol (2-3x/week) + moisturiser'],
+    },
+  };
+
+  // ── Concern chip toggle ──
+  document.querySelectorAll('.concern-chip input[type=checkbox]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      checkbox.closest('.concern-chip').classList.toggle('active', checkbox.checked);
+    });
+  });
+
+  function getSelectedConcerns() {
+    return Array.from(document.querySelectorAll('.concern-chip.active'))
+      .map(c => c.querySelector('input').value);
+  }
+
+  function applySeverity(severity) {
+    const cfg = SEV_CONFIG[severity] || SEV_CONFIG['Low'];
+    chipConcern.classList.remove('chip-high','chip-medium','chip-low');
+    chipConcern.classList.add(cfg.cls);
+    chipSeverityVal.className = 'sev-badge ' + cfg.badgeCls;
+    chipSeverityVal.textContent = cfg.emoji + ' ' + severity + ' — ' + cfg.label;
+    chipSeverity.classList.add('revealed');
+  }
+
+  function resetChips() {
+    [chipType, chipConcern, chipSeverity].forEach(c => {
+      c.classList.remove('revealed','chip-high','chip-medium','chip-low');
+      c.style.display = '';
+    });
+    chipTypeVal.textContent = '—'; chipConcernVal.textContent = '—';
+    chipSeverityVal.textContent = '—';
+    viewReportBtn.style.display = 'none';
+  }
+
+  function showPreview(file) {
+    currentFile = file;
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+      badge.style.display = 'block';
+      zone.classList.add('has-image');
+      btnAnalyze.style.display = 'block';
+      errorMsg.style.display = 'none';
+      resetChips();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function openResultsPage(data) {
+    const formattedSkinType = data.skin_type 
+        ? data.skin_type.charAt(0).toUpperCase() + data.skin_type.slice(1).toLowerCase() 
+        : 'Normal';
+    
+    const d = SKIN_DATA[formattedSkinType] || SKIN_DATA['Normal'];
+    const sevCfg = SEV_CONFIG[data.severity] || SEV_CONFIG['Low'];
+    
+    document.getElementById('rp-photo').src = preview.src;
+    document.getElementById('rp-skin-type').textContent = formattedSkinType;
+    document.getElementById('rp-concern-pill').textContent = '⚠ ' + data.concern;
+    
+    const sevPill = document.getElementById('rp-severity-pill');
+    sevPill.textContent = sevCfg.emoji + ' ' + data.severity + ' Severity';
+    sevPill.className = 'rp-pill sev-' + data.severity.toLowerCase();
+    
+    const metaEl = document.getElementById('rp-meta-extra');
+    let metaHtml = '';
+    if(data.gender) metaHtml += `<span class="rp-pill">${data.gender}</span>`;
+    if(data.age)    metaHtml += `<span class="rp-pill">Age ${data.age}</span>`;
+    if(data.concerns && data.concerns.length) metaHtml += `<span class="rp-pill">${data.concerns.join(' · ')}</span>`;
+    metaEl.innerHTML = metaHtml;
+    
+    document.getElementById('rp-info-cards').innerHTML = d.info.map(c =>
+      `<div class="rp-card"><div class="rp-card-icon">${c.icon}</div><h4>${c.title}</h4><p>${c.text}</p></div>`
+    ).join('');
+    document.getElementById('rp-nuskhe-list').innerHTML = d.nuskhe.map((n,i) =>
+      `<div class="rp-nuskhe-item"><div class="rp-nuskhe-num">${i+1}</div><div class="rp-nuskhe-text">${n}</div></div>`
+    ).join('');
+    document.getElementById('rp-products-list').innerHTML = d.products.map(p =>
+      `<div class="rp-prod-item"><div class="rp-prod-dot"></div><div class="rp-prod-text">${p}</div></div>`
+    ).join('');
+    document.getElementById('rp-morning').innerHTML = d.morning.map(s => `<div class="rp-routine-step">${s}</div>`).join('');
+    document.getElementById('rp-night').innerHTML = d.night.map(s => `<div class="rp-routine-step">${s}</div>`).join('');
+    
+    resultsPage.classList.add('active');
+    resultsPage.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeResultsPage() {
+    resultsPage.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // ── 4. FORM RESET LOGIC ──
+  function resetFormAndClose() {
+    closeResultsPage();
+    currentFile = null;
+    lastResult = null;
+    fileInput.value = '';
+
+    preview.src = '';
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    badge.style.display = 'none';
+    zone.classList.remove('has-image');
+    btnAnalyze.style.display = 'none';
+    btnAnalyze.textContent = '🌿 Analyse My Skin';
+
+    document.getElementById('meta-gender').value = '';
+    document.getElementById('meta-age').value = '';
+    
+    document.querySelectorAll('.concern-chip').forEach(chip => {
+      chip.classList.remove('active');
+      chip.querySelector('input').checked = false;
+    });
+
+    clearFieldError(document.getElementById('meta-gender'));
+    clearFieldError(document.getElementById('meta-age'));
+    clearFieldError(document.getElementById('concern-grid'));
+
+    resetChips();
+
+    setTimeout(() => {
+      document.getElementById('upload-zone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  }
+
+  viewReportBtn.addEventListener('click', () => { if(lastResult) openResultsPage(lastResult); });
+  rpBack.addEventListener('click', closeResultsPage);
+  rpReanalyse.addEventListener('click', resetFormAndClose);
+
+  zone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', function() { showPreview(this.files[0]); });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); showPreview(e.dataTransfer.files[0]); });
+
+  const genderEl      = document.getElementById('meta-gender');
+  const ageEl         = document.getElementById('meta-age');
+  const concernGridEl = document.getElementById('concern-grid');
+
+  function clearFieldError(el) { el.classList.remove('field-invalid'); }
+  genderEl.addEventListener('change', () => clearFieldError(genderEl));
+  ageEl.addEventListener('input', () => clearFieldError(ageEl));
+  concernGridEl.addEventListener('change', () => {
+    if (getSelectedConcerns().length) clearFieldError(concernGridEl);
+  });
+
+  function validateForm() {
+    const missing = [];
+    [genderEl, ageEl, concernGridEl].forEach(el => clearFieldError(el));
+
+    if (!currentFile) { missing.push('a photo'); }
+    if (!genderEl.value) { missing.push('gender'); genderEl.classList.add('field-invalid'); }
+
+    const ageVal = ageEl.value;
+    if (!ageVal || Number(ageVal) < 10 || Number(ageVal) > 99) {
+      missing.push('a valid age (10–99)');
+      ageEl.classList.add('field-invalid');
+    }
+
+    if (!getSelectedConcerns().length) {
+      missing.push('at least one skin concern');
+      concernGridEl.classList.add('field-invalid');
+    }
+    return missing;
+  }
+
+  // ── 5. UPDATED JSON PAYLOAD & FETCH URL ──
+  btnAnalyze.addEventListener('click', async function() {
+    const missing = validateForm();
+    if (missing.length) {
+      errorMsg.style.display = 'block';
+      errorMsg.textContent = '⚠ Please provide: ' + missing.join(', ') + '.';
+      return;
+    }
+    errorMsg.style.display = 'none';
+
+    // Extract the raw base64 string from the image preview
+    const base64String = preview.src.split(',')[1]; 
+
+    // Package the data into a JSON object
+    const payload = {
+      image_base64: base64String,
+      gender: document.getElementById('meta-gender').value,
+      age: document.getElementById('meta-age').value,
+      concerns: getSelectedConcerns()
+    };
+
+    try {
+      analyzingBar.style.display = 'block';
+      barFill.style.width = '30%';
+      btnAnalyze.classList.add('loading');
+      btnAnalyze.textContent = '⏳ Analysing...';
+      
+      // Send the JSON payload to AWS API Gateway WITH THE EXACT ROUTE APPENDED
+      const response = await fetch('https://3xi0k03926.execute-api.ap-south-1.amazonaws.com/default/apnitwacha-backend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      barFill.style.width = '70%';
+      const data = await response.json();
+      
+      lastResult = data;
+      lastResult.gender   = document.getElementById('meta-gender').value;
+      lastResult.age      = document.getElementById('meta-age').value;
+      lastResult.concerns = getSelectedConcerns();
+      
+      const formattedSkinType = data.skin_type 
+        ? data.skin_type.charAt(0).toUpperCase() + data.skin_type.slice(1).toLowerCase() 
+        : 'Normal';
+        
+      chipTypeVal.textContent    = formattedSkinType;
+      chipConcernVal.textContent = data.concern;
+      
+      barFill.style.width = '100%';
+      setTimeout(() => {
+        analyzingBar.style.display = 'none';
+        barFill.style.width = '0%';
+        btnAnalyze.classList.remove('loading');
+        btnAnalyze.textContent = '🔄 Re-analyse';
+        [chipType, chipConcern].forEach((c,i) => {
+          setTimeout(() => c.classList.add('revealed'), i * 150);
+        });
+        const severity = data.severity || 'Low';
+        setTimeout(() => {
+          applySeverity(severity);
+          viewReportBtn.style.display = 'block';
+        }, 500);
+      }, 600);
+    } catch(error) {
+      console.error(error);
+      errorMsg.style.display = 'block';
+      errorMsg.textContent = 'Backend connection failed!';
+      btnAnalyze.classList.remove('loading');
+      btnAnalyze.textContent = '🌿 Analyse My Skin';
+    }
+  });
+})();
+</script>
+</body>
+</html>
