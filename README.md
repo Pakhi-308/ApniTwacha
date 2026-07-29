@@ -4,7 +4,7 @@
 
 ApniTwacha is an AI-powered skincare web app that analyses a user's photo, detects their skin type and key concerns using on-device deep learning models, and returns a personalised report — complete with home remedies (*Gharelu Nuskhe*), curated product suggestions, and a daily skincare routine.
 
-🔗 **Live Demo:** [apnitwachafrontend.s3-website.ap-south-1.amazonaws.com](http://apnitwachafrontend.s3-website.ap-south-1.amazonaws.com)
+🔗 **Live Demo:** [apnitwachafrontend.s3-website.ap-south-1.amazonaws.com](http://apnitwachafront.s3-website.ap-south-1.amazonaws.com)
 
 🎥 **Demo Video:** [Watch here](https://drive.google.com/file/d/1f88c7_4VQNU8dW81_iR5b4tKOYTCQ16e/view?usp=sharing) <!-- TODO: replace with your actual Drive link -->
 
